@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Painel de Atendimentos - HIC Salvador Oncologia</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f0f4f8; min-width: 1100px; }
+
+  header { background: #0d7a70; color: white; display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .logo-box { display: flex; align-items: center; gap: 8px; border-right: 1px solid rgba(255,255,255,0.4); padding-right: 16px; }
+  .logo-cross { font-size: 28px; font-weight: bold; }
+  .logo-text .brand { font-size: 18px; font-weight: bold; }
+  .logo-text .sub { font-size: 11px; opacity: 0.85; }
+  .header-title .main { font-size: 17px; font-weight: bold; }
+  .header-title .sub { font-size: 13px; opacity: 0.85; }
+  .clock-box { border: 1px solid rgba(255,255,255,0.5); border-radius: 8px; padding: 8px 14px; text-align: right; }
+  .clock-box .date { font-weight: bold; font-size: 14px; }
+  .clock-box .time { font-size: 18px; font-weight: bold; }
+  .clock-box .upd { font-size: 10px; opacity: 0.75; }
+
+  .stats-bar { display: flex; align-items: center; gap: 12px; padding: 16px 24px; background: white; border-bottom: 1px solid #e0e0e0; }
+  .stat-card { display: flex; align-items: center; gap: 10px; background: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 18px; min-width: 140px; }
+  .stat-card.stat-card-late { background: #fee2e2; border-color: #fca5a5; }
+  .stat-card.stat-card-late .stat-value { color: #c62828 !important; }
+  .stat-icon { font-size: 26px; }
+  .stat-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: .5px; }
+  .stat-value { font-size: 26px; font-weight: bold; color: #1a1a1a; line-height: 1; }
+  .stat-desc { font-size: 11px; color: #888; }
+  .btn-novo { margin-left: auto; background: #0d7a70; color: white; border: none; border-radius: 10px; padding: 14px 22px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .btn-novo:hover { background: #0a6560; }
+
+  .toolbar { display: flex; align-items: center; gap: 10px; padding: 14px 24px; background: white; border-bottom: 1px solid #e0e0e0; flex-wrap: wrap; }
+  .search-box { display: flex; align-items: center; gap: 8px; border: 1px solid #ccc; border-radius: 8px; padding: 8px 14px; flex: 1; max-width: 380px; background: #fff; }
+  .search-box input { border: none; outline: none; font-size: 13px; width: 100%; background: transparent; }
+  .filter-select { border: 1px solid #ccc; border-radius: 8px; padding: 8px 14px; font-size: 13px; outline: none; background: white; cursor: pointer; }
+  .date-filter-box { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .date-filter-box label { font-size: 12px; color: #555; font-weight: bold; white-space: nowrap; }
+  .date-input { border: 1px solid #ccc; border-radius: 8px; padding: 8px 12px; font-size: 13px; outline: none; background: white; cursor: pointer; color: #333; }
+  .date-input:focus { border-color: #0d7a70; }
+  .btn-today { background: #0d7a70; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+  .btn-today:hover { background: #0a6560; }
+
+  .viewing-banner { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 6px 14px; font-size: 12px; color: #856404; display: none; align-items: center; gap: 8px; margin: 8px 24px 0; }
+  .viewing-banner.show { display: flex; }
+
+  .conn-banner { background: #fee2e2; border: 1px solid #fca5a5; border-radius: 8px; padding: 8px 16px; font-size: 12px; color: #991b1b; margin: 8px 24px 0; display: none; align-items: center; gap: 8px; }
+  .conn-banner.show { display: flex; }
+
+  .table-wrap { padding: 0 24px 24px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.07); margin-top: 16px; }
+  thead tr { background: #f8f9fa; border-bottom: 2px solid #e5e7eb; }
+  th { padding: 12px 14px; font-size: 11px; font-weight: bold; color: #555; text-transform: uppercase; letter-spacing: .4px; text-align: left; white-space: nowrap; }
+  th .th-icon { font-size: 14px; display: block; margin-bottom: 2px; }
+  th .th-sub { font-size: 10px; color: #888; font-weight: normal; text-transform: none; }
+  tbody tr { border-bottom: 1px solid #f0f0f0; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #fafbfc; }
+  td { padding: 12px 14px; font-size: 13px; vertical-align: middle; }
+  .td-num { font-weight: bold; color: #0d7a70; font-size: 14px; }
+  .td-name { font-weight: bold; font-size: 14px; }
+
+  .time-cell { text-align: left; }
+  .time-cell .t-time { font-size: 13px; color: #222; display: flex; align-items: center; gap: 4px; }
+  .time-cell .t-elapsed { font-size: 18px; font-weight: bold; margin-top: 2px; }
+  .elapsed-ok   { color: #2e7d32; }
+  .elapsed-warn { color: #e65100; }
+  .elapsed-late { color: #c62828; }
+
+  .btn-action { border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; width: 100%; display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 4px; }
+  .btn-puncionar { background: #7c3aed; color: white; }
+  .btn-preqt     { background: #ea580c; color: white; }
+  .btn-qt        { background: #1d4ed8; color: white; }
+  .btn-puncionar:hover { background: #6d28d9; }
+  .btn-preqt:hover     { background: #c2410c; }
+  .btn-qt:hover        { background: #1e40af; }
+  .btn-delete { background: none; border: 1px solid #fca5a5; color: #dc2626; border-radius: 8px; padding: 5px 10px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+  .btn-delete:hover { background: #fee2e2; }
+
+  .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: bold; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+  .badge-ok      { background: #dcfce7; color: #166534; }
+  .badge-running { background: #dbeafe; color: #1e40af; }
+  .badge-warn    { background: #fff7ed; color: #c2410c; }
+  .badge-late    { background: #fee2e2; color: #991b1b; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .dot-ok   { background: #16a34a; }
+  .dot-run  { background: #2563eb; }
+  .dot-warn { background: #ea580c; }
+  .dot-late { background: #dc2626; }
+
+  .tempo-total       { font-size: 14px; font-weight: bold; }
+  .tempo-total-empty { color: #bbb; font-size: 13px; }
+
+  .empty-state { text-align: center; padding: 48px 24px; color: #aaa; font-size: 14px; }
+  .empty-state .icon { font-size: 40px; margin-bottom: 10px; }
+
+  .footer-row { display: flex; gap: 16px; padding: 16px 24px; }
+  .legend-card, .metas-card { background: white; border-radius: 10px; padding: 14px 20px; font-size: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); flex: 1; }
+  .legend-title { font-weight: bold; font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 10px; }
+  .legend-items { display: flex; gap: 20px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: flex-start; gap: 6px; }
+  .legend-item .dot { margin-top: 3px; flex-shrink: 0; }
+  .legend-item .li-label { font-weight: bold; color: #333; }
+  .legend-item .li-sub { color: #888; font-size: 11px; }
+  .meta-item { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: #444; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; border-radius: 14px; padding: 28px; width: 380px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+  .modal h2 { font-size: 17px; margin-bottom: 18px; color: #0d7a70; }
+  .modal label { font-size: 12px; font-weight: bold; color: #555; display: block; margin-top: 12px; margin-bottom: 4px; }
+  .modal input { width: 100%; padding: 9px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none; }
+  .modal input:focus { border-color: #0d7a70; }
+  .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+  .modal-btns button { flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: bold; }
+  .modal-btns .cancel  { background: #f0f0f0; color: #555; }
+  .modal-btns .confirm { background: #0d7a70; color: white; }
+  .modal-btns .confirm:hover { background: #0a6560; }
+  .modal-btns .danger  { background: #dc2626; color: white; }
+  .modal-btns .danger:hover { background: #b91c1c; }
+  .del-modal { background: white; border-radius: 14px; padding: 28px; width: 360px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); text-align: center; }
+  .del-modal .del-icon { font-size: 40px; margin-bottom: 12px; }
+  .del-modal h2 { font-size: 16px; color: #dc2626; margin-bottom: 8px; }
+  .del-modal p  { font-size: 13px; color: #555; margin-bottom: 20px; line-height: 1.5; }
+  .del-modal .patient-name { font-weight: bold; color: #222; }
+
+  .loading { text-align: center; padding: 40px; color: #888; font-size: 14px; }
+  .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid #e5e7eb; border-top-color: #0d7a70; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 10px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo-box">
+      <div class="logo-cross">✚</div>
+      <div class="logo-text">
+        <div class="brand">MaterDei</div>
+        <div class="sub">Rede de Saúde</div>
+      </div>
+    </div>
+    <div class="header-title">
+      <div class="main">PAINEL DE ATENDIMENTOS</div>
+      <div class="sub">HIC SALVADOR — ONCOLOGIA AMBULATORIAL</div>
+    </div>
+  </div>
+  <div class="clock-box">
+    <div class="date" id="hdr-date">--/--/----</div>
+    <div class="time" id="hdr-time">--:--:--</div>
+    <div class="upd">🟢 Tempo real · atualiza automaticamente</div>
+  </div>
+</header>
+
+<div class="stats-bar">
+  <div class="stat-card">
+    <div class="stat-icon">👥</div>
+    <div>
+      <div class="stat-label">Total de Pacientes</div>
+      <div class="stat-value" id="stat-total">0</div>
+      <div class="stat-desc">atendimentos no dia</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="color:#16a34a">✅</div>
+    <div>
+      <div class="stat-label">Concluídos</div>
+      <div class="stat-value" id="stat-done" style="color:#16a34a">0</div>
+      <div class="stat-desc">pacientes</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="color:#d97706">🕐</div>
+    <div>
+      <div class="stat-label">Em Andamento</div>
+      <div class="stat-value" id="stat-running" style="color:#d97706">0</div>
+      <div class="stat-desc">pacientes</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="color:#dc2626">⚠️</div>
+    <div>
+      <div class="stat-label">Atrasados</div>
+      <div class="stat-value" id="stat-late" style="color:#dc2626">0</div>
+      <div class="stat-desc">paciente</div>
+    </div>
+  </div>
+  <div class="stat-card" id="card-avg-pre">
+    <div class="stat-icon">💊⏱️</div>
+    <div>
+      <div class="stat-label">Tempo Médio Pré-QT</div>
+      <div class="stat-value" id="stat-avg-pre">--:--</div>
+      <div class="stat-desc">meta: até 30 min</div>
+    </div>
+  </div>
+  <div class="stat-card" id="card-avg-qt">
+    <div class="stat-icon">🧪⏱️</div>
+    <div>
+      <div class="stat-label">Tempo Médio QT</div>
+      <div class="stat-value" id="stat-avg-qt">--:--</div>
+      <div class="stat-desc">meta: até 60 min</div>
+    </div>
+  </div>
+  <button class="btn-novo" id="btn-novo-pac" onclick="openModal()">＋ NOVO PACIENTE</button>
+</div>
+
+<div id="conn-banner" class="conn-banner">
+  ⚠️ Sem conexão com o banco de dados. Verifique sua internet.
+</div>
+
+<div class="toolbar">
+  <div class="search-box">
+    <span>🔍</span>
+    <input id="busca" type="text" placeholder="Buscar por nome ou nº de atendimento" oninput="render()"/>
+  </div>
+  <select class="filter-select" id="filtro" onchange="render()">
+    <option value="">Todos os status</option>
+    <option value="Concluído">Concluído</option>
+    <option value="Em andamento">Em andamento</option>
+    <option value="Atenção">Atenção</option>
+    <option value="Atrasado">Atrasado</option>
+  </select>
+  <div class="date-filter-box">
+    <label>📅 Ver data:</label>
+    <input type="date" id="date-picker" class="date-input" onchange="onDateChange()"/>
+    <button class="btn-today" onclick="goToday()">Hoje</button>
+  </div>
+</div>
+
+<div id="viewing-banner" class="viewing-banner">
+  📅 <span id="viewing-text"></span> — Visualização de histórico (somente leitura)
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Nº Atendimento</th>
+        <th>Paciente</th>
+        <th><span class="th-icon">🏥</span>Chegada<div class="th-sub">Recepção</div></th>
+        <th><span class="th-icon">💉</span>Punção<div class="th-sub">Enfermagem</div></th>
+        <th><span class="th-icon">💊</span>Pré-QT<div class="th-sub">Farmácia</div></th>
+        <th><span class="th-icon">🧪</span>QT<div class="th-sub">Farmácia</div></th>
+        <th>Tempo Total<div class="th-sub">Chegada até QT</div></th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr><td colspan="9"><div class="loading"><span class="spinner"></span>Conectando ao banco de dados...</div></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="footer-row">
+  <div class="legend-card">
+    <div class="legend-title">Legenda - Tempos</div>
+    <div class="legend-items">
+      <div class="legend-item"><span class="dot dot-ok"></span><div><div class="li-label">Dentro do prazo</div><div class="li-sub">Até 80% do tempo limite</div></div></div>
+      <div class="legend-item"><span class="dot dot-warn"></span><div><div class="li-label">Próximo do limite</div><div class="li-sub">De 80% até 100% do tempo</div></div></div>
+      <div class="legend-item"><span class="dot dot-late"></span><div><div class="li-label">Atrasado</div><div class="li-sub">Acima do tempo limite</div></div></div>
+    </div>
+  </div>
+  <div class="metas-card">
+    <div class="legend-title">Metas do Processo</div>
+    <div class="meta-item">💉 <b>Pré-QT:</b>&nbsp;até 30 minutos após a punção</div>
+    <div class="meta-item">🧪 <b>QT:</b>&nbsp;até 60 minutos após a punção</div>
+  </div>
+</div>
+
+<!-- MODAL NOVO PACIENTE -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>➕ Novo Paciente</h2>
+    <label>Nome do Paciente</label>
+    <input id="m-nome" placeholder="Nome completo"/>
+    <label>Nº de Atendimento</label>
+    <input id="m-atend" placeholder="Ex: 125483"/>
+    <div class="modal-btns">
+      <button class="cancel" onclick="closeModal()">Cancelar</button>
+      <button class="confirm" onclick="addPaciente()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR ETAPA -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="del-modal">
+    <div class="del-icon" id="confirm-icon">❓</div>
+    <h2 style="color:#0d7a70" id="confirm-titulo">Confirmar</h2>
+    <p>Confirma <span class="patient-name" id="confirm-acao"></span> para<br><span class="patient-name" id="confirm-nome"></span>?<br><br>O horário será registrado como o momento atual.</p>
+    <div class="modal-btns">
+      <button class="cancel" onclick="closeConfirmModal()">Cancelar</button>
+      <button class="confirm" onclick="confirmarMarcar()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EXCLUIR -->
+<div class="modal-overlay" id="modal-del">
+  <div class="del-modal">
+    <div class="del-icon">🗑️</div>
+    <h2>Excluir Paciente</h2>
+    <p>Tem certeza que deseja excluir o paciente<br><span class="patient-name" id="del-nome"></span>?<br><br>Esta ação não pode ser desfeita.</p>
+    <div class="modal-btns">
+      <button class="cancel" onclick="closeDelModal()">Cancelar</button>
+      <button class="danger" onclick="confirmarExclusao()">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- FIREBASE SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, doc,
+  onSnapshot, addDoc, updateDoc, deleteDoc,
+  query, where, orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ── FIREBASE CONFIG ──
+const firebaseConfig = {
+  apiKey: "AIzaSyCJkCJfdw3l13iWJHVYpQ26zxgNQ4JYXCY",
+  authDomain: "painel-hic-salvador.firebaseapp.com",
+  projectId: "painel-hic-salvador",
+  storageBucket: "painel-hic-salvador.firebasestorage.app",
+  messagingSenderId: "20794745",
+  appId: "1:20794745:web:d783523b2a9379062073a8"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── LIMITES ──
+// Pré-QT: até 30 min após a punção
+// QT: até 60 min após a punção (NÃO mais a partir da chegada)
+const LIMIT_PUN_PRE = 30 * 60;
+const LIMIT_PUN_QT  = 60 * 60;
+
+// ── STATE ──
+let pacientes    = [];   // array local espelhando Firestore
+let unsubscribe  = null; // listener atual
+let deleteDocId  = null;
+let selectedDate = todayStr();
+let pendingMark  = null; // { id, campo } aguardando confirmação no modal
+
+// ── UTILS DE DATA ──
+// IMPORTANTE: usar data LOCAL (não UTC). toISOString() é UTC e, em Salvador
+// (UTC-3), perto da meia-noite (21h-23h59 local) a data "virava" o dia
+// seguinte no banco, fazendo pacientes do dia sumirem do histórico quando
+// a data realmente mudava. Por isso construímos a string manualmente
+// a partir dos componentes locais.
+function todayStr() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+function dateStrOf(isoOrDate) {
+  const d = new Date(isoOrDate);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+function isToday() {
+  return selectedDate === todayStr();
+}
+function fmt(iso) {
+  return iso ? new Date(iso).toLocaleTimeString("pt-br") : null;
+}
+function diffSec(a, b) {
+  return (new Date(b) - new Date(a)) / 1000;
+}
+function fmtSec(s) {
+  s = Math.max(0, Math.floor(s));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+}
+function fmtMin(s) {
+  s = Math.max(0, Math.round(s));
+  const m = Math.floor(s / 60), ss = s % 60;
+  return `${m}min ${String(ss).padStart(2,'0')}s`;
+}
+function elapsedClass(sec, limit) {
+  const pct = sec / limit;
+  if (pct >= 1)   return "elapsed-late";
+  if (pct >= 0.8) return "elapsed-warn";
+  return "elapsed-ok";
+}
+// Variante usada apenas para o tempo de espera pela PUNÇÃO / cronômetro de
+// chegada: por pedido da equipe, esse número nunca fica vermelho, mesmo
+// passando do tempo de referência. No máximo fica em "atenção" (laranja).
+function elapsedClassNoLate(sec, limit) {
+  const pct = sec / limit;
+  if (pct >= 0.8) return "elapsed-warn";
+  return "elapsed-ok";
+}
+function statusOf(p) {
+  const now = new Date().toISOString();
+  if (p.qt) return "Concluído";
+
+  // Antes da punção: o relógio que conta é o de chegada -> punção.
+  // Não há mais meta fixa de "chegada até QT"; usamos a meta de punção
+  // (LIMIT_PUN_QT) como referência para sinalizar atraso também nesta fase,
+  // já que se a punção atrasar, a QT inteira fica comprometida.
+  if (!p.puncao) {
+    const t = diffSec(p.chegada, now);
+    if (t >= LIMIT_PUN_QT)       return "Atrasado";
+    if (t >= LIMIT_PUN_QT * 0.8) return "Atenção";
+    return "Em andamento";
+  }
+
+  // Após a punção: cronômetro de chegada já parou. A partir daqui,
+  // tudo é medido a partir do horário da punção.
+  if (!p.preqt) {
+    const s = diffSec(p.puncao, now);
+    if (s >= LIMIT_PUN_PRE)       return "Atrasado";
+    if (s >= LIMIT_PUN_PRE * 0.8) return "Atenção";
+    return "Em andamento";
+  }
+
+  // Pré-QT já entregue: agora a meta de QT é 60 min após a PUNÇÃO.
+  const s = diffSec(p.puncao, now);
+  if (s >= LIMIT_PUN_QT)       return "Atrasado";
+  if (s >= LIMIT_PUN_QT * 0.8) return "Atenção";
+  return "Em andamento";
+}
+function badgeHtml(status) {
+  const map = {
+    "Concluído":    `<span class="badge badge-ok"><span class="dot dot-ok"></span>Concluído</span>`,
+    "Em andamento": `<span class="badge badge-running"><span class="dot dot-run"></span>Em andamento</span>`,
+    "Atenção":      `<span class="badge badge-warn"><span class="dot dot-warn"></span>Atenção</span>`,
+    "Atrasado":     `<span class="badge badge-late"><span class="dot dot-late"></span>Atrasado</span>`,
+  };
+  return map[status] || "";
+}
+
+// ── FIRESTORE LISTENER ──
+function subscribeToDate(dateStr) {
+  if (unsubscribe) unsubscribe();
+  document.getElementById("tbody").innerHTML =
+    `<tr><td colspan="9"><div class="loading"><span class="spinner"></span>Carregando...</div></td></tr>`;
+
+  const q = query(
+    collection(db, "pacientes"),
+    where("data", "==", dateStr),
+    orderBy("chegada", "asc")
+  );
+
+  unsubscribe = onSnapshot(q,
+    (snap) => {
+      document.getElementById("conn-banner").classList.remove("show");
+      pacientes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      render();
+    },
+    (err) => {
+      console.error(err);
+      document.getElementById("conn-banner").classList.add("show");
+    }
+  );
+}
+
+// ── ADD PACIENTE ──
+window.openModal = function() {
+  if (!isToday()) return;
+  document.getElementById("modal").classList.add("open");
+  setTimeout(() => document.getElementById("m-nome").focus(), 100);
+};
+window.closeModal = function() {
+  document.getElementById("modal").classList.remove("open");
+  document.getElementById("m-nome").value = "";
+  document.getElementById("m-atend").value = "";
+};
+window.addPaciente = async function() {
+  const nome  = document.getElementById("m-nome").value.trim();
+  const atend = document.getElementById("m-atend").value.trim();
+  if (!nome || !atend) { alert("Preencha nome e nº de atendimento."); return; }
+  await addDoc(collection(db, "pacientes"), {
+    nome, atend,
+    data: todayStr(),
+    chegada: new Date().toISOString(),
+    puncao: null, preqt: null, qt: null,
+    puncaoLocked: false
+  });
+  closeModal();
+};
+
+// ── MARCAR ETAPA (com confirmação) ──
+const ETAPA_INFO = {
+  puncao: { acao: "marcar a PUNÇÃO",        icone: "💉" },
+  preqt:  { acao: "marcar a ENTREGA DA PRÉ-QT", icone: "💊" },
+  qt:     { acao: "marcar a ENTREGA DA QT",     icone: "🧪" },
+};
+
+window.marcar = function(id, campo) {
+  if (!isToday()) return;
+  const p = pacientes.find(x => x.id === id);
+  if (!p) return;
+  const info = ETAPA_INFO[campo] || { acao: "marcar esta etapa", icone: "❓" };
+  pendingMark = { id, campo };
+  document.getElementById("confirm-icon").textContent   = info.icone;
+  document.getElementById("confirm-titulo").textContent = "Confirmar Registro";
+  document.getElementById("confirm-acao").textContent   = info.acao;
+  document.getElementById("confirm-nome").textContent   = `${p.atend} — ${p.nome}`;
+  document.getElementById("modal-confirm").classList.add("open");
+};
+window.closeConfirmModal = function() {
+  pendingMark = null;
+  document.getElementById("modal-confirm").classList.remove("open");
+};
+window.confirmarMarcar = async function() {
+  if (!pendingMark) return;
+  const { id, campo } = pendingMark;
+  const ref = doc(db, "pacientes", id);
+  await updateDoc(ref, { [campo]: new Date().toISOString() });
+  closeConfirmModal();
+};
+
+// ── EXCLUIR ──
+window.openDelModal = function(id, nomeAtend) {
+  deleteDocId = id;
+  document.getElementById("del-nome").textContent = nomeAtend;
+  document.getElementById("modal-del").classList.add("open");
+};
+window.closeDelModal = function() {
+  deleteDocId = null;
+  document.getElementById("modal-del").classList.remove("open");
+};
+window.confirmarExclusao = async function() {
+  if (!deleteDocId) return;
+  await deleteDoc(doc(db, "pacientes", deleteDocId));
+  closeDelModal();
+};
+
+// ── DATE FILTER ──
+window.onDateChange = function() {
+  selectedDate = document.getElementById("date-picker").value || todayStr();
+  updateBanner();
+  subscribeToDate(selectedDate);
+};
+window.goToday = function() {
+  selectedDate = todayStr();
+  document.getElementById("date-picker").value = selectedDate;
+  updateBanner();
+  subscribeToDate(selectedDate);
+};
+
+function updateBanner() {
+  const banner = document.getElementById("viewing-banner");
+  const btnNovo = document.getElementById("btn-novo-pac");
+  if (!isToday()) {
+    const [y, m, d] = selectedDate.split("-");
+    document.getElementById("viewing-text").textContent =
+      `Exibindo atendimentos de ${d}/${m}/${y}`;
+    banner.classList.add("show");
+    btnNovo.style.opacity = "0.4";
+    btnNovo.style.pointerEvents = "none";
+  } else {
+    banner.classList.remove("show");
+    btnNovo.style.opacity = "";
+    btnNovo.style.pointerEvents = "";
+  }
+}
+
+// ── RENDER ──
+function render() {
+  const now    = new Date().toISOString();
+  const busca  = document.getElementById("busca").value.toLowerCase();
+  const filtro = document.getElementById("filtro").value;
+  const hist   = !isToday();
+
+  let total = 0, done = 0, running = 0, late = 0;
+  let somaPre = 0, qtdPre = 0;
+  let somaQt  = 0, qtdQt  = 0;
+  pacientes.forEach(p => {
+    const st = statusOf(p); total++;
+    if (st === "Concluído") done++;
+    else if (st === "Atrasado") late++;
+    else running++;
+
+    // Tempo de entrega da Pré-QT: punção -> preqt
+    if (p.puncao && p.preqt) {
+      somaPre += diffSec(p.puncao, p.preqt);
+      qtdPre++;
+    }
+    // Tempo de entrega da QT: punção -> qt (nova meta: 60min pós-punção)
+    if (p.puncao && p.qt) {
+      somaQt += diffSec(p.puncao, p.qt);
+      qtdQt++;
+    }
+  });
+  document.getElementById("stat-total").textContent   = total;
+  document.getElementById("stat-done").textContent    = done;
+  document.getElementById("stat-running").textContent = running;
+  document.getElementById("stat-late").textContent    = late;
+
+  // ── Cards de tempo médio ──
+  const cardPre = document.getElementById("card-avg-pre");
+  const cardQt  = document.getElementById("card-avg-qt");
+  if (qtdPre > 0) {
+    const mediaPre = somaPre / qtdPre;
+    document.getElementById("stat-avg-pre").textContent = fmtMin(mediaPre);
+    cardPre.classList.toggle("stat-card-late", mediaPre > LIMIT_PUN_PRE);
+  } else {
+    document.getElementById("stat-avg-pre").textContent = "--:--";
+    cardPre.classList.remove("stat-card-late");
+  }
+  if (qtdQt > 0) {
+    const mediaQt = somaQt / qtdQt;
+    document.getElementById("stat-avg-qt").textContent = fmtMin(mediaQt);
+    cardQt.classList.toggle("stat-card-late", mediaQt > LIMIT_PUN_QT);
+  } else {
+    document.getElementById("stat-avg-qt").textContent = "--:--";
+    cardQt.classList.remove("stat-card-late");
+  }
+
+  const tbody = document.getElementById("tbody");
+
+  const filtered = pacientes.filter(p => {
+    if (busca && !p.nome.toLowerCase().includes(busca) && !p.atend.toLowerCase().includes(busca)) return false;
+    if (filtro && filtro !== statusOf(p)) return false;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">
+      <div class="icon">📋</div>
+      Nenhum paciente encontrado para este dia.
+    </div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = "";
+  filtered.forEach(p => {
+    const status      = statusOf(p);
+    // Cronômetro de chegada: PARA no momento da punção. Se já puncionado,
+    // mostramos o tempo congelado (chegada -> punção) em vez de continuar
+    // contando com "now". Isso vale tanto para exibição quanto para classe de cor.
+    const cheEla      = p.puncao ? diffSec(p.chegada, p.puncao) : diffSec(p.chegada, now);
+    const cheElaClass = elapsedClassNoLate(cheEla, LIMIT_PUN_QT);
+
+    // PUNÇÃO
+    let punCell;
+    if (p.puncao) {
+      const ela = diffSec(p.chegada, p.puncao);
+      punCell = `<div class="time-cell">
+        <div class="t-time">${fmt(p.puncao)} ✅</div>
+        <div class="t-elapsed ${elapsedClassNoLate(ela, LIMIT_PUN_QT * 0.3)}">${fmtSec(ela)}</div>
+      </div>`;
+    } else if (hist) {
+      punCell = `<div class="time-cell"><div class="t-time" style="color:#bbb">—</div></div>`;
+    } else {
+      punCell = `<div class="time-cell">
+        <button class="btn-action btn-puncionar" onclick="marcar('${p.id}','puncao')">💉 PUNCIONAR</button>
+        <div class="t-elapsed ${cheElaClass}">${fmtSec(cheEla)}</div>
+      </div>`;
+    }
+
+    // PRÉ-QT (meta: 30 min após a punção — sem alteração de base)
+    let preCell;
+    if (p.preqt) {
+      const ela = p.puncao ? diffSec(p.puncao, p.preqt) : 0;
+      const cls = elapsedClass(ela, LIMIT_PUN_PRE);
+      preCell = `<div class="time-cell">
+        <div class="t-time">${fmt(p.preqt)} ${cls === "elapsed-late" ? "⏰" : "✅"}</div>
+        <div class="t-elapsed ${cls}">${fmtSec(ela)}</div>
+      </div>`;
+    } else if (hist) {
+      preCell = `<div class="time-cell"><div class="t-time" style="color:#bbb">—</div></div>`;
+    } else {
+      const ela = p.puncao ? diffSec(p.puncao, now) : 0;
+      const cls = p.puncao ? elapsedClass(ela, LIMIT_PUN_PRE) : "";
+      preCell = `<div class="time-cell">
+        <button class="btn-action btn-preqt" onclick="marcar('${p.id}','preqt')">💊 ENTREGAR PRÉ-QT</button>
+        ${p.puncao ? `<div class="t-elapsed ${cls}">${fmtSec(ela)}</div>` : `<div class="t-elapsed" style="color:#bbb">--:--:--</div>`}
+      </div>`;
+    }
+
+    // QT (meta: 60 min após a PUNÇÃO, não mais a partir da chegada)
+    let qtCell;
+    if (p.qt) {
+      const ela = p.puncao ? diffSec(p.puncao, p.qt) : 0;
+      const cls = elapsedClass(ela, LIMIT_PUN_QT);
+      qtCell = `<div class="time-cell">
+        <div class="t-time">${fmt(p.qt)} ✅</div>
+        <div class="t-elapsed ${cls}">${fmtSec(ela)}</div>
+      </div>`;
+    } else if (hist) {
+      qtCell = `<div class="time-cell"><div class="t-time" style="color:#bbb">—</div></div>`;
+    } else {
+      const ela = p.puncao ? diffSec(p.puncao, now) : 0;
+      const cls = p.puncao ? elapsedClass(ela, LIMIT_PUN_QT) : "";
+      qtCell = `<div class="time-cell">
+        <button class="btn-action btn-qt" onclick="marcar('${p.id}','qt')">🧪 ENTREGAR QT</button>
+        ${p.puncao ? `<div class="t-elapsed ${cls}">${fmtSec(ela)}</div>` : `<div class="t-elapsed" style="color:#bbb">--:--:--</div>`}
+      </div>`;
+    }
+
+    // TEMPO TOTAL (chegada até QT, mantido como indicador geral de jornada do paciente)
+    let tempoTotalHtml;
+    if (p.qt) {
+      const tot = diffSec(p.chegada, p.qt);
+      tempoTotalHtml = `<div class="tempo-total ${tot <= LIMIT_PUN_QT ? 'elapsed-ok' : 'elapsed-late'}">${fmtSec(tot)}<br><span style="font-size:10px;font-weight:normal">hh:mm:ss</span></div>`;
+    } else {
+      tempoTotalHtml = `<div class="tempo-total-empty">--:--:--<br><span style="font-size:10px">hh:mm:ss</span></div>`;
+    }
+
+    tbody.innerHTML += `
+    <tr>
+      <td class="td-num">${p.atend}</td>
+      <td class="td-name">${p.nome}</td>
+      <td>
+        <div class="time-cell">
+          <div class="t-time">${fmt(p.chegada)} ✅</div>
+          ${!hist ? `<div class="t-elapsed ${cheElaClass}">${fmtSec(cheEla)}</div>` : ""}
+        </div>
+      </td>
+      <td>${punCell}</td>
+      <td>${preCell}</td>
+      <td>${qtCell}</td>
+      <td>${tempoTotalHtml}</td>
+      <td>${badgeHtml(status)}</td>
+      <td><button class="btn-delete" onclick="openDelModal('${p.id}','${p.atend} — ${p.nome.replace(/'/g,"\\'")}')">🗑 Excluir</button></td>
+    </tr>`;
+  });
+}
+
+// ── CLOCK ──
+function updateClock() {
+  const now = new Date();
+  document.getElementById("hdr-date").textContent = now.toLocaleDateString("pt-br");
+  document.getElementById("hdr-time").textContent = now.toLocaleTimeString("pt-br");
+}
+
+// ── INIT ──
+document.getElementById("date-picker").value = todayStr();
+document.getElementById("date-picker").max   = todayStr();
+subscribeToDate(selectedDate);
+updateClock();
+setInterval(() => { render(); updateClock(); }, 1000);
+
+// fechar modais clicando fora
+document.getElementById("modal").addEventListener("click", function(e) { if (e.target===this) closeModal(); });
+document.getElementById("modal-del").addEventListener("click", function(e) { if (e.target===this) closeDelModal(); });
+document.getElementById("modal-confirm").addEventListener("click", function(e) { if (e.target===this) closeConfirmModal(); });
+</script>
+</body>
+</html>
